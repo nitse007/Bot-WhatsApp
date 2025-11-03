@@ -13,7 +13,7 @@ const { Sticker } = require('wa-sticker-formatter');
 const { MongoClient } = require('mongodb'); // <-- ¡Importamos MongoDB!
 
 // --- ¡NUEVO! Configuración de MongoDB ---
-// ¡¡¡PEGA AQUÍ TU NUEVA CADENA DE CONEXIÓN (la LARGA, versión "3.6 or later")!!!
+// ¡TU URI DE CONEXIÓN CORREGIDA (LA LARGA)!
 const MONGO_URI = "mongodb://nitse:3OPTKa2RfoTjogTn@nitse-shard-00-00.lkimjbq.mongodb.net:27017,nitse-shard-00-01.lkimjbq.mongodb.net:27017,nitse-shard-00-02.lkimjbq.mongodb.net:27017/?ssl=true&replicaSet=atlas-qg0aeg-shard-0&authSource=admin&retryWrites=true&w=majority&appName=nitse";
 const MONGO_DB_NAME = "bot_whatsapp"; // Nombre de tu base de datos
 const MONGO_COLLECTION_NAME = "auth_session"; // Nombre de la colección
@@ -139,4 +139,72 @@ async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 
     // --- 3. Manejador de Conexión ---
-    sock.ev.on('connection.update', (
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        
+        if (qr) {
+            // ¡Importante! En Render, no verás un QR, sino un texto.
+            console.log('¡QR recibido! Escanéalo con tu teléfono. Si estás en Render, copia este texto en los logs:');
+            qrcode.generate(qr, { small: true }); // Esto también imprime en los logs
+        }
+
+        if (connection === 'open') {
+            console.log('¡Bot conectado y en línea!');
+        } 
+        
+        if (connection === 'close') {
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Conexión cerrada. Reconectando:', shouldReconnect);
+            if (shouldReconnect) {
+                connectToWhatsApp(); 
+            } else {
+                console.error('¡Desconexión fatal! La sesión se cerró (probablemente escaneaste en otro lugar).');
+                process.exit(1); 
+            }
+        }
+    });
+
+    // --- 4. Manejador de Mensajes (Solo Stickers) ---
+    sock.ev.on('messages.upsert', async (m) => {
+        const msg = m.messages[0];
+        if (!msg.message || msg.key.fromMe) return;
+
+        const messageText = msg.message.conversation || msg.message.extendedTextMessage?.text;
+        if (!messageText) return;
+
+        const command = messageText.toLowerCase().trim();
+        const from = msg.key.remoteJid;
+        const quotedMsg = msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
+
+        if (command === '!sticker') {
+            console.log(`Comando !sticker recibido de ${from}`);
+            if (!quotedMsg) {
+                await sock.sendMessage(from, { text: 'Debes *responder* a una imagen con el comando \`!sticker\`' });
+                return;
+            }
+            if (quotedMsg.imageMessage) {
+                console.log('Procesando imagen con wa-sticker-formatter...');
+                try {
+                    // (Aquí fallará en Render porque no hay ffmpeg, pero el bot seguirá vivo)
+                    const stream = await downloadContentFromMessage(quotedMsg.imageMessage, 'image');
+                    let buffer = Buffer.from([]);
+                    for await (const chunk of stream) {
+                        buffer = Buffer.concat([buffer, chunk]);
+                    }
+                    const sticker = new Sticker(buffer, { pack: 'Bot - ia - nitse', author: 'Creado por Bot', type: 'default', quality: 75 });
+                    const stickerBuffer = await sticker.toBuffer();
+                    await sock.sendMessage(from, { sticker: stickerBuffer });
+                    console.log('¡Sticker enviado!');
+                } catch (e) {
+                    console.error('Error al crear el sticker (probablemente falta ffmpeg):', e.message);
+                    await sock.sendMessage(from, { text: '¡Ups! Esta función (sticker) está deshabilitada en el servidor.' });
+                }
+            } else {
+                await sock.sendMessage(from, { text: 'Solo puedo convertir *imágenes* en stickers.' });
+            }
+        }
+    });
+}
+
+// --- 5. Iniciar el Bot ---
+connectToWhatsApp();
