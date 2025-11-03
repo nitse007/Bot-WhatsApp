@@ -13,7 +13,7 @@ const { Sticker } = require('wa-sticker-formatter');
 const { MongoClient } = require('mongodb'); // <-- ¡Importamos MongoDB!
 
 // --- ¡NUEVO! Configuración de MongoDB ---
-// ¡TU URI DE CONEXIÓN CORREGIDA (LA LARGA)!
+// ¡¡¡PEGA AQUÍ TU NUEVA CADENA DE CONEXIÓN (la LARGA, versión "3.6 or later")!!!
 const MONGO_URI = "mongodb://nitse:3OPTKa2RfoTjogTn@nitse-shard-00-00.lkimjbq.mongodb.net:27017,nitse-shard-00-01.lkimjbq.mongodb.net:27017,nitse-shard-00-02.lkimjbq.mongodb.net:27017/?ssl=true&replicaSet=atlas-qg0aeg-shard-0&authSource=admin&retryWrites=true&w=majority&appName=nitse";
 const MONGO_DB_NAME = "bot_whatsapp"; // Nombre de tu base de datos
 const MONGO_COLLECTION_NAME = "auth_session"; // Nombre de la colección
