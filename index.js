@@ -13,7 +13,7 @@ const { Sticker } = require('wa-sticker-formatter');
 const { MongoClient } = require('mongodb'); // <-- ¡Importamos MongoDB!
 
 // --- ¡NUEVO! Configuración de MongoDB ---
-// ¡¡¡PEGA AQUÍ TU URI DE CONEXIÓN DE ATLAS!!!
+// ¡¡¡TU URI DE CONEXIÓN DE ATLAS!!!
 const MONGO_URI = "mongodb+srv://nitse:3OPTKa2RfoTjogTn@nitse.lkimjbq.mongodb.net/?appName=nitse";
 const MONGO_DB_NAME = "bot_whatsapp"; // Nombre de tu base de datos
 const MONGO_COLLECTION_NAME = "auth_session"; // Nombre de la colección
@@ -159,7 +159,6 @@ async function connectToWhatsApp() {
                 connectToWhatsApp(); 
             } else {
                 console.error('¡Desconexión fatal! La sesión se cerró (probablemente escaneaste en otro lugar).');
-                // En un PaaS, esto debería hacer que el proceso se detenga para que el PaaS lo reinicie
                 process.exit(1); 
             }
         }
@@ -180,7 +179,7 @@ async function connectToWhatsApp() {
         if (command === '!sticker') {
             console.log(`Comando !sticker recibido de ${from}`);
             if (!quotedMsg) {
-                await sock.sendMessage(from, { text: 'Debes *responder* a una imagen con el comando `!sticker`' });
+                await sock.sendMessage(from, { text: 'Debes *responder* a una imagen con el comando \`!sticker\`' });
                 return;
             }
             if (quotedMsg.imageMessage) {
