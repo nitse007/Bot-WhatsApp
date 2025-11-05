@@ -1,14 +1,13 @@
 {
-  "name": "mi-bot-sticker-mongo",
+  "name": "mi-bot-sticker-local",
   "version": "1.0.0",
-  "description": "Un bot que hace stickers y usa MongoDB",
+  "description": "Mi bot de stickers (local)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node bot-protegido.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.5",
-    "mongodb": "^6.7.0",
     "qrcode-terminal": "^0.12.0",
     "wa-sticker-formatter": "^4.4.4"
   }
